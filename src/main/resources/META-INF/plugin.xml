@@ -1,0 +1,46 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>io.github.e1roy.jbcall</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
+    <name>JBCall HTTP Server</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor url="https://github.com/e1roy">E1roy</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
+    <description><![CDATA[
+        JBCall HTTP Server Plugin for IntelliJ IDEA.<br>
+        <em>Provides embedded HTTP server with REST API capabilities.</em>
+    ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- 注册启动监听器 -->
+        <postStartupActivity implementation="io.github.e1roy.jbcall.HttpServerStartupActivity"/>
+
+        <!-- 注册应用级服务 -->
+        <applicationService serviceImplementation="io.github.e1roy.jbcall.HttpServerComponent"/>
+
+        <!-- 通知组 -->
+        <notificationGroup id="JBCall.Notifications" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <!-- 添加工具菜单项 -->
+        <action id="JBCall.HttpServerStatus"
+                class="io.github.e1roy.jbcall.HttpServerAction"
+                text="HTTP服务器状态"
+                description="查看HTTP服务器状态">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
