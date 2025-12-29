@@ -1,0 +1,25 @@
+Reusing configuration cache.
+> Task :checkKotlinGradlePluginConfigurationErrors SKIPPED
+
+> Task :compileKotlin FAILED
+e: file:///C:/Users/elroysu/Desktop/projects/jbcall/src/main/kotlin/io/github/e1roy/jbcall/util/TypeUtils.kt:3:36 Unresolved reference 'JvmClassType'.
+e: file:///C:/Users/elroysu/Desktop/projects/jbcall/src/main/kotlin/io/github/e1roy/jbcall/util/TypeUtils.kt:30:16 Unresolved reference 'JvmClassType'.
+e: file:///C:/Users/elroysu/Desktop/projects/jbcall/src/main/kotlin/io/github/e1roy/jbcall/util/TypeUtils.kt:32:40 Unresolved reference 'resolve'.
+e: file:///C:/Users/elroysu/Desktop/projects/jbcall/src/main/kotlin/io/github/e1roy/jbcall/util/TypeUtils.kt:33:52 Unresolved reference 'name'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1s
+1 actionable task: 1 executed
+Configuration cache entry reused.

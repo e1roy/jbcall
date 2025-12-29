@@ -3,16 +3,20 @@ package io.github.e1roy.jbcall
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
+import io.github.e1roy.jbcall.config.ServerConfig
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.servlet.ServletHolder
 import java.net.InetSocketAddress
 
+/**
+ * HTTP服务器组件 - 管理Jetty服务器生命周期
+ */
 @Service(Service.Level.APP)
 class HttpServerComponent {
     private val logger = Logger.getInstance(HttpServerComponent::class.java)
     private var server: Server? = null
-    private val port = 8080
+    private val config = ServerConfig.getInstance()
     
     companion object {
         fun getInstance(): HttpServerComponent {
@@ -22,41 +26,30 @@ class HttpServerComponent {
     
     fun startServer() {
         if (server?.isStarted == true) {
-            logger.warn("HTTP服务器已经在运行中，端口: $port")
-            println("JBCall: HTTP服务器已经在运行中，端口: $port")
+            logger.info("HTTP服务器已在运行，端口: ${config.port}")
             return
         }
         
         try {
-            logger.warn("开始启动HTTP服务器...")
-            println("JBCall: 开始启动HTTP服务器...")
+            logger.info("启动HTTP服务器，端口: ${config.port}")
             
-            server = Server(InetSocketAddress("localhost", port))
+            server = Server(InetSocketAddress(config.host, config.port))
             
-            // 创建Servlet上下文处理器
             val context = ServletContextHandler(ServletContextHandler.SESSIONS)
             context.contextPath = "/"
             
-            // 首先添加API Servlet (更具体的路径匹配)
-            val apiServlet = ServletHolder(ApiServlet())
-            context.addServlet(apiServlet, "/api/*")
-            
-            // 然后添加静态文件Servlet (作为默认处理器)
-            val staticServlet = ServletHolder(StaticFileServlet())
-            context.addServlet(staticServlet, "/")
+            // 添加API处理器
+            context.addServlet(ServletHolder(ApiServlet()), "/api/*")
+            // 添加静态文件处理器
+            context.addServlet(ServletHolder(StaticFileServlet()), "/")
             
             server?.handler = context
             server?.start()
             
-            logger.warn("HTTP服务器启动成功，端口: $port")
-            logger.warn("访问地址: http://localhost:$port")
-            println("JBCall: HTTP服务器启动成功，端口: $port")
-            println("JBCall: 访问地址: http://localhost:$port")
+            logger.info("HTTP服务器启动成功: ${config.getServerUrl()}")
             
         } catch (e: Exception) {
             logger.error("启动HTTP服务器失败", e)
-            println("JBCall ERROR: 启动HTTP服务器失败 - ${e.message}")
-            e.printStackTrace()
             throw e
         }
     }
@@ -65,19 +58,21 @@ class HttpServerComponent {
         try {
             server?.stop()
             server = null
-            logger.warn("HTTP服务器已停止")
-            println("JBCall: HTTP服务器已停止")
+            logger.info("HTTP服务器已停止")
         } catch (e: Exception) {
             logger.error("停止HTTP服务器失败", e)
-            println("JBCall ERROR: 停止HTTP服务器失败 - ${e.message}")
         }
     }
     
-    fun isRunning(): Boolean {
-        return server?.isStarted == true
+    fun restartServer() {
+        logger.info("重启HTTP服务器")
+        stopServer()
+        startServer()
     }
     
-    fun getPort(): Int = port
+    fun isRunning(): Boolean = server?.isStarted == true
     
-    fun getServerUrl(): String = "http://localhost:$port"
+    fun getPort(): Int = config.port
+    
+    fun getServerUrl(): String = config.getServerUrl()
 }
