@@ -37,13 +37,13 @@ class HttpServerComponent {
             val context = ServletContextHandler(ServletContextHandler.SESSIONS)
             context.contextPath = "/"
             
-            // 添加API Servlet
+            // 首先添加API Servlet (更具体的路径匹配)
             val apiServlet = ServletHolder(ApiServlet())
             context.addServlet(apiServlet, "/api/*")
             
-            // 添加静态文件Servlet
+            // 然后添加静态文件Servlet (作为默认处理器)
             val staticServlet = ServletHolder(StaticFileServlet())
-            context.addServlet(staticServlet, "/*")
+            context.addServlet(staticServlet, "/")
             
             server?.handler = context
             server?.start()
