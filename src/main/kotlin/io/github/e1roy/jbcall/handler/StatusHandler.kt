@@ -67,4 +67,41 @@ class StatusHandler : BaseHandler() {
         
         sendJsonResponse(response, ApiResponse.success(echoData))
     }
+    
+    fun handleErrorCheckPage(request: HttpServletRequest, response: HttpServletResponse) {
+        enableCors(response)
+        
+        try {
+            val htmlContent = this::class.java.classLoader.getResourceAsStream("web/error-check.html")?.use { 
+                it.bufferedReader().readText() 
+            } ?: """
+                <!DOCTYPE html>
+                <html>
+                <head><title>Error Check Tool</title></head>
+                <body>
+                    <h1>JBCall Error Check Tool</h1>
+                    <p>HTML file not found. Please ensure error-check.html is in the resources/web directory.</p>
+                </body>
+                </html>
+            """.trimIndent()
+            
+            response.contentType = "text/html"
+            response.characterEncoding = "UTF-8"
+            response.writer.write(htmlContent)
+        } catch (e: Exception) {
+            response.status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+            response.contentType = "text/html"
+            response.characterEncoding = "UTF-8"
+            response.writer.write("""
+                <!DOCTYPE html>
+                <html>
+                <head><title>Error</title></head>
+                <body>
+                    <h1>Error</h1>
+                    <p>Failed to load error check page: ${e.message}</p>
+                </body>
+                </html>
+            """.trimIndent())
+        }
+    }
 }

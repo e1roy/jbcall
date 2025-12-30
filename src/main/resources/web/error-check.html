@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JBCall - 类错误检查</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .loading {
+            background-color: #cce7ff;
+            border: 1px solid #b3d9ff;
+            color: #004085;
+        }
+        .problem-item {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .problem-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .problem-error {
+            border-left: 4px solid #dc3545;
+        }
+        .problem-warning {
+            border-left: 4px solid #ffc107;
+        }
+        .code-context {
+            background-color: #f1f3f4;
+            border: 1px solid #e1e5e9;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .line-number {
+            color: #666;
+            margin-right: 10px;
+        }
+        .examples {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .examples h3 {
+            margin-top: 0;
+            color: #004085;
+        }
+        .example-item {
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+            background-color: white;
+            padding: 5px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 JBCall 类错误检查工具</h1>
+        
+        <div class="examples">
+            <h3>📝 使用示例</h3>
+            <div class="example-item">TestMain - 简单类名（会搜索所有匹配的类）</div>
+            <div class="example-item">org.example.TestMain - 全限定类名</div>
+            <div class="example-item">com.mycompany.service.UserService - 完整包名</div>
+        </div>
+
+        <div class="form-group">
+            <label for="className">类名 (Class Name):</label>
+            <input type="text" id="className" placeholder="输入类名，例如: TestMain 或 org.example.TestMain" />
+        </div>
+
+        <button onclick="checkErrors()">🔍 检查错误</button>
+        <button onclick="clearResult()">🗑️ 清空结果</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8080/api';
+
+        async function checkErrors() {
+            const className = document.getElementById('className').value.trim();
+            const resultDiv = document.getElementById('result');
+
+            if (!className) {
+                showResult('请输入类名', 'error');
+                return;
+            }
+
+            showResult('正在检查类错误...', 'loading');
+
+            try {
+                const response = await fetch(`${API_BASE}/class/errors?class=${encodeURIComponent(className)}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    // 直接显示返回的文本，保持格式
+                    showResult(data.data, 'success');
+                } else {
+                    showResult(`错误: ${data.error?.message || '未知错误'}`, 'error');
+                }
+            } catch (error) {
+                showResult(`请求失败: ${error.message}\n\n请确保 JBCall 服务正在运行 (http://127.0.0.1:8080)`, 'error');
+            }
+        }
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+
+        function clearResult() {
+            document.getElementById('result').innerHTML = '';
+            document.getElementById('className').value = '';
+        }
+
+        // 回车键触发检查
+        document.getElementById('className').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkErrors();
+            }
+        });
+
+        // 页面加载时的提示
+        window.onload = function() {
+            showResult('输入类名并点击"检查错误"按钮开始检查', 'loading');
+        };
+    </script>
+</body>
+</html>
