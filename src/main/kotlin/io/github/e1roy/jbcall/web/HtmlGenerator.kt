@@ -44,9 +44,21 @@ object HtmlGenerator {
                     </div>
                     <div class="test-form">
                         <h3>🔍 类错误检查测试</h3>
-                        <input type="text" id="errorCheckClassName" placeholder="输入类名，如: TestMain" />
+                        <input type="text" id="errorCheckClassName" placeholder="输入类名或文件名，如: TestMain 或 com.example.TestMain" />
                         <button onclick="checkClassErrors()">检查错误</button>
                         <button onclick="openErrorCheckPage()" style="background: #28a745;">打开专用页面</button>
+                        <div class="hint">
+                            💡 支持格式: 完整类名 (com.example.TestMain) 或 文件名 (TestMain.java / TestMain)
+                        </div>
+                    </div>
+                    <div class="test-form">
+                        <h3>🔗 方法调用链查询</h3>
+                        <input type="text" id="callChainClassName" placeholder="输入类名或文件名，如: TestMain 或 com.example.TestMain" />
+                        <input type="text" id="callChainMethodName" placeholder="输入方法名，如: test" />
+                        <button onclick="getCallChain()">查询调用链</button>
+                        <div class="hint">
+                            💡 支持格式: 完整类名 (com.example.TestMain) 或 文件名 (TestMain.java / TestMain)
+                        </div>
                     </div>
                     <div class="test-form">
                         <h3>方法体获取测试</h3>
@@ -150,6 +162,12 @@ object HtmlGenerator {
             overflow-y: auto;
             white-space: pre-wrap;
         }
+        .hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
     """.trimIndent()
     
     private fun getApiList(): String = """
@@ -161,6 +179,7 @@ object HtmlGenerator {
         <div class="api-item"><span class="method">GET</span> /api/class?class=&lt;类名&gt;&format=json - 类详细分析(JSON格式)</div>
         <div class="api-item"><span class="method">GET</span> /api/class?class=&lt;类名&gt;&format=simple - 类简洁分析(文本格式)</div>
         <div class="api-item"><span class="method">GET</span> /api/class/errors?class=&lt;类名&gt; - 类错误检查</div>
+        <div class="api-item"><span class="method">GET</span> /api/class/callchain?class=&lt;类名&gt;&method=&lt;方法名&gt; - 方法调用链查询</div>
         <div class="api-item"><span class="method">GET</span> /api/method?class=&lt;类名&gt;&method=&lt;方法名&gt; - 方法体获取</div>
         <div class="api-item"><span class="method">GET</span> /api/error-check - 错误检查工具页面</div>
     """.trimIndent()
@@ -277,6 +296,39 @@ object HtmlGenerator {
             
             try {
                 const endpoint = `/api/class/errors?class=${'$'}{encodeURIComponent(className)}`;
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 直接显示返回的文本
+                    resultElement.textContent = data.data;
+                } else {
+                    resultElement.textContent = `错误: ${'$'}{data.error?.message || '未知错误'}`;
+                }
+            } catch (error) {
+                resultElement.textContent = `请求失败: ${'$'}{error.message}\n\n请确保 JBCall 服务正在运行`;
+            }
+        }
+        
+        async function getCallChain() {
+            const className = document.getElementById('callChainClassName').value.trim();
+            const methodName = document.getElementById('callChainMethodName').value.trim();
+            
+            if (!className) {
+                alert('请输入类名');
+                return;
+            }
+            
+            if (!methodName) {
+                alert('请输入方法名');
+                return;
+            }
+            
+            const resultElement = document.getElementById('result');
+            resultElement.textContent = '正在查询调用链...';
+            
+            try {
+                const endpoint = `/api/class/callchain?class=${'$'}{encodeURIComponent(className)}&method=${'$'}{encodeURIComponent(methodName)}`;
                 const response = await fetch(endpoint);
                 const data = await response.json();
                 

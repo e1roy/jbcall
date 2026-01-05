@@ -33,6 +33,12 @@
 
         <!-- 通知组 -->
         <notificationGroup id="JBCall.Notifications" displayType="BALLOON"/>
+        
+        <!-- 注册状态栏组件 -->
+        <statusBarWidgetFactory 
+            id="JBCall.HttpServerStatus"
+            implementation="io.github.e1roy.jbcall.statusbar.HttpServerStatusBarWidgetFactory"
+            order="after Encoding"/>
     </extensions>
 
     <actions>

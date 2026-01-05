@@ -354,11 +354,18 @@ class ClassAnalysisHandler : BaseHandler() {
     }
 
     private fun buildFieldInfo(field: PsiField): Map<String, Any> {
-        return mapOf(
+        val fieldInfo = mutableMapOf<String, Any>(
             "name" to field.name,
             "type" to TypeUtils.getTypeQualifiedName(field.type),
             "modifiers" to getModifiers(field)
         )
+        
+        // 获取字段初始化表达式
+        field.initializer?.let { initializer ->
+            fieldInfo["initializer"] = initializer.text
+        }
+        
+        return fieldInfo
     }
 
     private fun buildMethodInfo(method: PsiMethod): Map<String, Any> {
@@ -519,7 +526,13 @@ class ClassAnalysisHandler : BaseHandler() {
                 val modifiers = (fieldMap["modifiers"] as? List<*>)?.joinToString(" ") ?: "".trim()
                 val type = fieldMap["type"] ?: "unknown".trim()
                 val name = fieldMap["name"] ?: "unknown".trim()
-                appendLine("- $modifiers $type $name;")
+                val initializer = fieldMap["initializer"] as? String
+                
+                if (initializer != null) {
+                    appendLine("- $modifiers $type $name = $initializer;")
+                } else {
+                    appendLine("- $modifiers $type $name;")
+                }
             }
 
             // 输出方法

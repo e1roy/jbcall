@@ -5,6 +5,7 @@ import io.github.e1roy.jbcall.handler.StatusHandler
 import io.github.e1roy.jbcall.handler.ProjectHandler
 import io.github.e1roy.jbcall.handler.ClassAnalysisHandler
 import io.github.e1roy.jbcall.handler.ErrorCheckHandler
+import io.github.e1roy.jbcall.handler.CallChainHandler
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -20,6 +21,7 @@ class ApiServlet : HttpServlet() {
     private val projectHandler = ProjectHandler()
     private val classAnalysisHandler = ClassAnalysisHandler()
     private val errorCheckHandler = ErrorCheckHandler()
+    private val callChainHandler = CallChainHandler()
 
     override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) {
         handleRequest(req, resp)
@@ -59,6 +61,7 @@ class ApiServlet : HttpServlet() {
                 pathInfo.startsWith("/project") -> projectHandler.handleProjectInfo(req, resp)
                 pathInfo.startsWith("/method") -> classAnalysisHandler.handleMethodBody(req, resp)
                 pathInfo.startsWith("/class/errors") -> errorCheckHandler.handleErrorCheck(req, resp)
+                pathInfo.startsWith("/class/callchain") -> callChainHandler.handleCallChain(req, resp)
                 pathInfo.startsWith("/class") -> classAnalysisHandler.handleClassAnalysis(req, resp)
                 else -> handleNotFound(resp)
             }
@@ -85,6 +88,7 @@ class ApiServlet : HttpServlet() {
                 "/api/project/classes - 项目类列表",
                 "/api/class?class=<className>&format=json - 类分析",
                 "/api/class/errors?class=<className> - 类错误检查",
+                "/api/class/callchain?class=<className>&method=<methodName> - 方法调用链查询",
                 "/api/method?class=<className>&method=<methodName> - 方法体获取"
             )
         )
