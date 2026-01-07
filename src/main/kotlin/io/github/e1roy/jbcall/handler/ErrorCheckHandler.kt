@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
@@ -125,6 +126,11 @@ class ErrorCheckHandler : BaseHandler() {
             return "❌ 无法获取文件信息"
         }
 
+        // 手动刷新文件系统，确保IDEA感知到外部文件变化
+        val refreshTime = System.currentTimeMillis()
+        refreshFileSystem(virtualFile)
+        println("文件系统刷新耗时: ${System.currentTimeMillis() - refreshTime}ms")
+
         // 检查文件是否已在编辑器中打开
         val fileEditorManager = FileEditorManager.getInstance(project)
         val isFileAlreadyOpen = fileEditorManager.isFileOpen(virtualFile)
@@ -153,7 +159,16 @@ class ErrorCheckHandler : BaseHandler() {
                 println("等待分析耗时: ${System.currentTimeMillis() - waitTime}ms, 结果: $analysisCompleted")
             }
         } else {
-            println("文件已在编辑器中打开，跳过打开和分析等待步骤")
+            println("文件已在编辑器中打开，但仍需要刷新分析")
+            // 即使文件已打开，也要重新触发分析以确保获取最新的错误信息
+            val triggerTime = System.currentTimeMillis()
+            analysisTriggered = triggerCodeAnalysis(project, containingFile)
+            println("重新触发分析耗时: ${System.currentTimeMillis() - triggerTime}ms, 结果: $analysisTriggered")
+            
+            // 等待分析完成
+            val waitTime = System.currentTimeMillis()
+            analysisCompleted = waitForAnalysisCompletion(project, containingFile, 3000)
+            println("等待重新分析耗时: ${System.currentTimeMillis() - waitTime}ms, 结果: $analysisCompleted")
         }
 
         // 使用 IntelliJ 内置的错误检测功能
@@ -166,6 +181,7 @@ class ErrorCheckHandler : BaseHandler() {
         val result = buildString {
             appendLine("文件: ${containingFile.name}")
             appendLine("路径: ${virtualFile.path}")
+            appendLine("✅ 文件系统已刷新")
             
             if (isFileAlreadyOpen) {
                 appendLine("✅ 文件已在编辑器中打开")
@@ -175,14 +191,20 @@ class ErrorCheckHandler : BaseHandler() {
                 } else {
                     appendLine("❌ 文件打开失败")
                 }
-                
-                if (!analysisTriggered) {
-                    appendLine("⚠️ 无法触发代码分析")
-                }
-                if (!analysisCompleted) {
-                    appendLine("⚠️ 分析可能未完成（超时）")
-                }
             }
+            
+            if (!analysisTriggered) {
+                appendLine("⚠️ 无法触发代码分析")
+            } else {
+                appendLine("✅ 代码分析已触发")
+            }
+            
+            if (!analysisCompleted) {
+                appendLine("⚠️ 分析可能未完成（超时）")
+            } else {
+                appendLine("✅ 代码分析已完成")
+            }
+            
             appendLine()
 
             if (errorResults.errors.isEmpty()) {
@@ -204,6 +226,31 @@ class ErrorCheckHandler : BaseHandler() {
         println("总耗时: ${System.currentTimeMillis() - startTime}ms")
 
         return result
+    }
+
+    /**
+     * 手动刷新文件系统，确保IDEA感知到外部文件变化
+     * @param virtualFile 需要刷新的虚拟文件
+     */
+    private fun refreshFileSystem(virtualFile: com.intellij.openapi.vfs.VirtualFile) {
+        try {
+            println("开始刷新文件系统: ${virtualFile.path}")
+            
+            // 刷新单个文件
+            virtualFile.refresh(false, false)
+            
+            // 也可以刷新整个文件系统（更彻底但可能较慢）
+            // VirtualFileManager.getInstance().syncRefresh()
+            
+            // 或者刷新文件的父目录
+            virtualFile.parent?.refresh(false, true)
+            
+            println("文件系统刷新完成: ${virtualFile.path}")
+            
+        } catch (e: Exception) {
+            println("刷新文件系统时出错: ${e.message}")
+            e.printStackTrace()
+        }
     }
 
     /**
@@ -493,7 +540,6 @@ class ErrorCheckHandler : BaseHandler() {
         return cleaned
     }
 
-    
     /**
      * 检查基本的语法错误作为备用方案
      */
